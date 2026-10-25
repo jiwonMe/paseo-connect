@@ -1,5 +1,17 @@
-import type { PluginClientContext } from "@getpaseo/plugin/client";
+import type { PluginClientContext, PluginSidebarItemProps } from "@getpaseo/plugin/client";
+import { SidebarRow } from "@getpaseo/plugin/client/ui";
 import { ConnectScreen } from "./client/connect";
+
+function ConnectItem({ currentScreen, openScreen }: PluginSidebarItemProps) {
+  return (
+    <SidebarRow
+      icon="Link"
+      title="Connect"
+      active={currentScreen?.screenId === "connect"}
+      onPress={() => openScreen({ screenId: "connect" })}
+    />
+  );
+}
 
 export default function contribute(client: PluginClientContext) {
   client.addScreen({
@@ -11,7 +23,7 @@ export default function contribute(client: PluginClientContext) {
   client.addSidebarHeaderItem({
     id: "connect",
     title: "Connect",
-    Component: () => null, // sidebar row handled by host or simple label
+    Component: ConnectItem,
   });
 
   return () => {};
