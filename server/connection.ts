@@ -16,39 +16,47 @@ export async function getInfo() {
 
 export async function doPairing() {
   try {
-    const { stdout } = await execAsync("paseo daemon pair --relay 2>&1 || true", { timeout: 20000 });
+    const { stdout } = await execAsync("paseo daemon pair --relay 2>&1 || true", { timeout: 10000 });
     return { message: stdout.slice(0, 800), url: undefined, code: undefined };
   } catch (e: any) {
-    return { message: String(e.stdout || e.message || e) };
+    return { message: String(e.message || e) };
   }
 }
 
 export async function doGitHub() {
   try {
-    // Use --web which prints the code and URL
+    // Run with a short timeout and capture whatever comes out
     const { stdout, stderr } = await execAsync(
-      "gh auth login --web --hostname github.com 2>&1 || true",
-      { timeout: 12000 }
+      "timeout 6 gh auth login --web --hostname github.com 2>&1 || true",
+      { timeout: 8000 }
     );
-    const out = (stdout || "") + (stderr || "");
-
-    // Match common formats: XXXX-XXXX or code: XXXX-XXXX
+    const combined = (stdout + "\n" + stderr);
     const codeMatch =
-      out.match(/code:\s*([A-Z0-9-]{4,})/i) ||
-      out.match(/([A-Z0-9]{4}-[A-Z0-9]{4})/) ||
-      out.match(/one-time code[:\s]+([A-Z0-9-]+)/i);
+      combined.match(/one-time code:\s*([A-Z0-9-]+)/i) ||
+      combined.match(/code:\s*([A-Z0-9]{4}-[A-Z0-9]{4})/i) ||
+      combined.match(/([A-Z0-9]{4}-[A-Z0-9]{4})/);
 
-    const urlMatch = out.match(/(https:\/\/github\.com\/login\/device[^\s]*)/i);
+    if (codeMatch) {
+      return {
+        message: "Device code ready. Open the URL and enter the code.",
+        code: codeMatch[1],
+        url: "https://github.com/login/device",
+      };
+    }
 
     return {
-      message: out.slice(0, 600) || "Started device login",
-      code: codeMatch?.[1] || "see output above",
-      url: urlMatch?.[1] || "https://github.com/login/device",
+      message:
+        "Could not auto-capture code (gh is interactive).\n\n" +
+        "1. Open Railway Shell\n" +
+        "2. Run: gh auth login --web\n" +
+        "3. Copy the one-time code shown\n" +
+        "4. Open https://github.com/login/device and paste it",
+      code: undefined,
+      url: "https://github.com/login/device",
     };
   } catch (e: any) {
-    const out = String(e.stdout || e.stderr || e.message || e);
     return {
-      message: out.slice(0, 400) || "Failed to start. Run manually: gh auth login --web",
+      message: "Open Railway Shell and run:\n  gh auth login --web\n\nThen visit https://github.com/login/device",
       url: "https://github.com/login/device",
     };
   }
@@ -56,7 +64,6 @@ export async function doGitHub() {
 
 export async function saveKey({ key, provider }: { key: string; provider?: string }) {
   const envPath = path.join(process.env.HOME || "/home/paseo", ".paseo", ".env.auth");
-  await fs.mkdir(path.dirname(envPath), { recursive: true }).catch(() => {});
   const line =
     provider === "openai"
       ? `OPENAI_API_KEY=${key}`
@@ -64,5 +71,5 @@ export async function saveKey({ key, provider }: { key: string; provider?: strin
       ? `GH_TOKEN=${key}`
       : `ANTHROPIC_API_KEY=${key}`;
   await fs.appendFile(envPath, line + "\n", "utf8").catch(() => {});
-  return { ok: true, message: "Saved to .env.auth (restart daemon to load)" };
+  return { ok: true, message: "Saved to .env.auth (restart the service to load)" };
 }
