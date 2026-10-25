@@ -2,7 +2,7 @@ import { defineRpc } from "@getpaseo/plugin";
 import { z } from "zod";
 
 export const getConnectionInfo = defineRpc({
-  name: "connect.getInfo",
+  name: "connect.get-info",
   input: z.object({}),
   output: z.object({
     webUi: z.string().optional(),
@@ -12,7 +12,7 @@ export const getConnectionInfo = defineRpc({
 });
 
 export const startPairing = defineRpc({
-  name: "connect.startPairing",
+  name: "connect.start-pairing",
   input: z.object({}),
   output: z.object({
     url: z.string().optional(),
@@ -22,7 +22,7 @@ export const startPairing = defineRpc({
 });
 
 export const startGitHubDevice = defineRpc({
-  name: "connect.startGitHub",
+  name: "connect.start-github",
   input: z.object({}),
   output: z.object({
     code: z.string().optional(),
@@ -32,7 +32,7 @@ export const startGitHubDevice = defineRpc({
 });
 
 export const saveApiKey = defineRpc({
-  name: "connect.saveKey",
+  name: "connect.save-key",
   input: z.object({
     key: z.string(),
     provider: z.enum(["anthropic", "openai", "github"]).optional(),
