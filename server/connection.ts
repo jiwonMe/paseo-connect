@@ -2,17 +2,10 @@ import { exec } from "node:child_process";
 import { promisify } from "node:util";
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { RpcInput } from "@getpaseo/plugin";
-import {
-  getConnectionInfo,
-  startPairing,
-  startGitHubDevice,
-  saveApiKey,
-} from "../shared/connection";
 
 const execAsync = promisify(exec);
 
-export async function getInfo(): Promise<RpcInput<typeof getConnectionInfo> extends never ? any : any> {
+export async function getInfo() {
   const domain = process.env.RAILWAY_PUBLIC_DOMAIN;
   return {
     webUi: domain ? `https://${domain}` : undefined,
@@ -23,36 +16,53 @@ export async function getInfo(): Promise<RpcInput<typeof getConnectionInfo> exte
 
 export async function doPairing() {
   try {
-    const { stdout } = await execAsync("paseo daemon pair --relay 2>&1 || true");
-    return { message: stdout.slice(0, 500), url: undefined, code: undefined };
+    const { stdout } = await execAsync("paseo daemon pair --relay 2>&1 || true", { timeout: 20000 });
+    return { message: stdout.slice(0, 800), url: undefined, code: undefined };
   } catch (e: any) {
-    return { message: String(e.message || e) };
+    return { message: String(e.stdout || e.message || e) };
   }
 }
 
 export async function doGitHub() {
   try {
-    const { stdout } = await execAsync("gh auth login --web --hostname github.com 2>&1 || true", {
-      timeout: 8000,
-    });
-    const codeMatch = stdout.match(/code:\s*([A-Z0-9-]+)/i) || stdout.match(/([A-Z0-9]{4}-[A-Z0-9]{4})/);
+    // Use --web which prints the code and URL
+    const { stdout, stderr } = await execAsync(
+      "gh auth login --web --hostname github.com 2>&1 || true",
+      { timeout: 12000 }
+    );
+    const out = (stdout || "") + (stderr || "");
+
+    // Match common formats: XXXX-XXXX or code: XXXX-XXXX
+    const codeMatch =
+      out.match(/code:\s*([A-Z0-9-]{4,})/i) ||
+      out.match(/([A-Z0-9]{4}-[A-Z0-9]{4})/) ||
+      out.match(/one-time code[:\s]+([A-Z0-9-]+)/i);
+
+    const urlMatch = out.match(/(https:\/\/github\.com\/login\/device[^\s]*)/i);
+
     return {
-      message: stdout.slice(0, 400),
-      code: codeMatch?.[1],
-      url: "https://github.com/login/device",
+      message: out.slice(0, 600) || "Started device login",
+      code: codeMatch?.[1] || "see output above",
+      url: urlMatch?.[1] || "https://github.com/login/device",
     };
   } catch (e: any) {
-    return { message: "Run in shell: gh auth login --web", url: "https://github.com/login/device" };
+    const out = String(e.stdout || e.stderr || e.message || e);
+    return {
+      message: out.slice(0, 400) || "Failed to start. Run manually: gh auth login --web",
+      url: "https://github.com/login/device",
+    };
   }
 }
 
 export async function saveKey({ key, provider }: { key: string; provider?: string }) {
   const envPath = path.join(process.env.HOME || "/home/paseo", ".paseo", ".env.auth");
-  const line = provider === "openai"
-    ? `OPENAI_API_KEY=${key}`
-    : provider === "github"
-    ? `GH_TOKEN=${key}`
-    : `ANTHROPIC_API_KEY=${key}`;
+  await fs.mkdir(path.dirname(envPath), { recursive: true }).catch(() => {});
+  const line =
+    provider === "openai"
+      ? `OPENAI_API_KEY=${key}`
+      : provider === "github"
+      ? `GH_TOKEN=${key}`
+      : `ANTHROPIC_API_KEY=${key}`;
   await fs.appendFile(envPath, line + "\n", "utf8").catch(() => {});
   return { ok: true, message: "Saved to .env.auth (restart daemon to load)" };
 }
