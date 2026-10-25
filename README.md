@@ -1,24 +1,20 @@
 # Paseo Connect Plugin
 
-A Paseo plugin that helps with:
+Helps with daemon pairing, GitHub device-code auth, and provider API keys.
 
-- Daemon connection info and pairing
-- GitHub CLI device-code authentication
-- Claude / Codex API key setup
+## Features (scaffold)
+
+1. Pairing link / QR guidance
+2. GitHub CLI device code starter
+3. API key form (Claude / Codex)
+4. OAuth login guidance
 
 ## Install
 
 ```bash
-paseo plugin add jiwonMe/paseo-connect
+paseo plugin add github:jiwonMe/paseo-connect
 ```
-
-Or from Settings → Plugins → Plugin source.
 
 ## Development
 
-```bash
-paseo plugin init .
-npm install
-```
-
-See https://paseo.sh/docs/plugins for the full plugin guide.
+See https://paseo.sh/docs/plugins
