@@ -1,6 +1,8 @@
 {
   "id": "paseo-connect",
   "name": "Paseo Connect",
-  "description": "Easy connection setup, pairing QR, and provider auth helper for self-hosted Paseo (especially Railway).",
-  "requirements": { "paseo": ">=0.8.0" }
+  "description": "Helps with daemon connection, pairing QR, and provider authentication (GitHub, Claude, Codex).",
+  "requirements": {
+    "paseo": ">=0.8.0"
+  }
 }
