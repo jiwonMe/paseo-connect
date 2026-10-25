@@ -1,46 +1,44 @@
-import { z } from "zod";
 import { defineRpc } from "@getpaseo/plugin";
+import { z } from "zod";
 
-export const connectionInfo = defineRpc({
-  method: "connection.info",
+export const getConnectionInfo = defineRpc({
+  name: "connect.getInfo",
   input: z.object({}),
   output: z.object({
-    publicDomain: z.string().nullable(),
-    webUiUrl: z.string().nullable(),
-    hasPassword: z.boolean(),
-    relayEnabled: z.boolean(),
+    webUi: z.string().optional(),
+    passwordSet: z.boolean(),
+    relayEnabled: z.boolean().optional(),
   }),
 });
 
 export const startPairing = defineRpc({
-  method: "connection.pair",
+  name: "connect.startPairing",
   input: z.object({}),
   output: z.object({
-    url: z.string().nullable(),
-    qr: z.string().nullable(),
-    error: z.string().optional(),
+    url: z.string().optional(),
+    code: z.string().optional(),
+    message: z.string(),
   }),
 });
 
-export const startGithubAuth = defineRpc({
-  method: "auth.github.start",
+export const startGitHubDevice = defineRpc({
+  name: "connect.startGitHub",
   input: z.object({}),
   output: z.object({
-    code: z.string().nullable(),
-    url: z.string(),
-    raw: z.string().optional(),
+    code: z.string().optional(),
+    url: z.string().optional(),
+    message: z.string(),
   }),
 });
 
-export const saveKeys = defineRpc({
-  method: "auth.keys.save",
+export const saveApiKey = defineRpc({
+  name: "connect.saveKey",
   input: z.object({
-    anthropic: z.string().optional(),
-    openai: z.string().optional(),
-    github: z.string().optional(),
+    key: z.string(),
+    provider: z.enum(["anthropic", "openai", "github"]).optional(),
   }),
   output: z.object({
     ok: z.boolean(),
-    path: z.string().optional(),
+    message: z.string(),
   }),
 });

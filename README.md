@@ -1,13 +1,11 @@
 # Paseo Connect Plugin
 
-Helps with daemon pairing, GitHub device-code auth, and provider API keys.
+Properly implemented plugin for:
 
-## Features (scaffold)
-
-1. Pairing link / QR guidance
-2. GitHub CLI device code starter
-3. API key form (Claude / Codex)
-4. OAuth login guidance
+1. Connection info
+2. Pairing link / QR generation
+3. GitHub device-code login
+4. API key save (Claude / Codex / GitHub)
 
 ## Install
 
@@ -15,6 +13,10 @@ Helps with daemon pairing, GitHub device-code auth, and provider API keys.
 paseo plugin add github:jiwonMe/paseo-connect
 ```
 
-## Development
+## Features
 
-See https://paseo.sh/docs/plugins
+- RPCs for all actions
+- Writes keys to `~/.paseo/.env.auth`
+- Works with the railway-paseo image (pre-installed)
+
+See the Connect screen in the sidebar after install and reload.
